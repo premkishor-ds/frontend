@@ -20,6 +20,7 @@ const QUICK_LINKS = [
   { label: "Car Wash", value: "Car Wash" },
   { label: "Business Fuel", value: "Business Fuel" },
 ] as const;
+console.log("Test Commit ")
 
 type RetrievedItem = {
   content?: string;
