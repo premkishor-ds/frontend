@@ -2,12 +2,26 @@
 
 import { useState } from "react";
 
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8001";
+
+type RetrievedItem = {
+  content?: string;
+  metadata?: unknown;
+};
+
+type SearchResponse = {
+  answer: string;
+  retrieved: RetrievedItem[];
+  intent?: string;
+};
+
 export default function Home() {
   const [query, setQuery] = useState("");
-  const [response, setResponse] = useState<any>(null);
+  const [response, setResponse] = useState<SearchResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSearch = async (e: React.FormEvent) => {
+      const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
 
@@ -15,7 +29,7 @@ export default function Home() {
     setResponse(null);
 
     try {
-      const res = await fetch("http://localhost:8000/search", {
+        const res = await fetch(`${BACKEND_URL}/search`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -24,10 +38,13 @@ export default function Home() {
       });
 
       const data = await res.json();
-      setResponse(data);
+      setResponse(data as SearchResponse);
     } catch (err) {
       console.error("Error fetching data:", err);
-      setResponse({ answer: "Failed to connect to the backend. Is it running?" });
+      setResponse({
+        answer: "Failed to connect to the backend. Is it running?",
+        retrieved: [],
+      });
     } finally {
       setLoading(false);
     }
@@ -88,7 +105,7 @@ export default function Home() {
               <div className="mt-8 pt-8 border-t border-gray-700">
                 <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Sources Found</h3>
                 <div className="grid gap-3">
-                  {response.retrieved.map((item: any, idx: number) => (
+                  {response.retrieved.map((item, idx: number) => (
                     <div key={idx} className="bg-[#0f172a] p-3 rounded-lg border border-gray-800 text-xs text-gray-400 font-mono">
                       {item.content || JSON.stringify(item)}
                     </div>
