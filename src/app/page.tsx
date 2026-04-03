@@ -97,6 +97,24 @@ function Spinner({ className }: { className?: string }) {
   );
 }
 
+/** Simple loading UI for the assistant reply. */
+function AssistantLoadingBubble() {
+  return (
+    <div
+      className="rounded-2xl border border-[#c5d4e8]/70 bg-[#f8fbff] px-3 py-2.5"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <span className="sr-only">Searching, please wait</span>
+      <div className="flex items-center gap-2 text-neutral-700 text-sm">
+        <Spinner className="text-[#02568d]" />
+        <span>Searching Maxol data…</span>
+      </div>
+    </div>
+  );
+}
+
 function makeId() {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
@@ -267,23 +285,34 @@ export default function Home() {
             <form
               onSubmit={handleSearch}
               className="mt-8 sm:mt-10 max-w-2xl mx-auto"
+              aria-busy={loading}
             >
               <div className="flex items-stretch rounded-full bg-white pl-4 sm:pl-5 pr-1.5 py-1.5 shadow-[0_4px_24px_rgba(12,61,108,0.12)] border border-neutral-200/90">
                 <input
                   type="text"
-                  className="flex-1 min-w-0 bg-transparent border-0 focus:ring-0 focus:outline-none text-base text-neutral-800 placeholder:text-neutral-400 py-3"
+                  className="flex-1 min-w-0 bg-transparent border-0 focus:ring-0 focus:outline-none text-base text-neutral-800 placeholder:text-neutral-400 py-3 disabled:opacity-60"
                   placeholder="Search anything about Maxol..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   aria-label="Search"
+                  disabled={loading}
                 />
                 <button
                   type="submit"
                   disabled={loading}
-                  className="shrink-0 inline-flex items-center justify-center gap-2 rounded-full bg-[#02568d] hover:bg-[#014a79] text-white text-sm font-semibold px-5 sm:px-6 py-3 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                  className="shrink-0 min-w-[7.5rem] inline-flex items-center justify-center gap-2 rounded-full bg-[#02568d] hover:bg-[#014a79] text-white text-sm font-semibold px-5 sm:px-6 py-3 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
                 >
-                  <SearchIcon className="w-[18px] h-[18px]" />
-                  {loading ? "..." : "Search"}
+                  {loading ? (
+                    <>
+                      <Spinner className="w-[18px] h-[18px] text-white" />
+                      <span>Searching</span>
+                    </>
+                  ) : (
+                    <>
+                      <SearchIcon className="w-[18px] h-[18px]" />
+                      <span>Search</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -325,12 +354,7 @@ export default function Home() {
                   ) : (
                     <div className="max-w-[80%] rounded-2xl bg-white border border-neutral-200/90 px-4 py-3 shadow-sm">
                       {m.pending ? (
-                        <div className="flex items-center gap-2 text-neutral-600">
-                          <Spinner className="text-[#02568d]" />
-                          <span className="text-sm sm:text-base font-medium">
-                            Thinking...
-                          </span>
-                        </div>
+                        <AssistantLoadingBubble />
                       ) : (
                         <>
                           {m.intent && (
@@ -346,24 +370,31 @@ export default function Home() {
 
                           {m.retrieved && m.retrieved.length > 0 && (
                             <div className="mt-3 pt-3 border-t border-neutral-200">
-                              <div className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">
-                                Sources
+                              <div className="flex items-center justify-between gap-3 mb-2">
+                                <div className="text-xs font-bold text-neutral-500 uppercase tracking-widest">
+                                  Sources
+                                </div>
+                                <div className="text-[10px] text-neutral-400 font-mono">
+                                  Showing{" "}
+                                  {Math.min(
+                                    m.retrieved.length,
+                                    MAX_SOURCES_SHOWN
+                                  )}{" "}
+                                  of {m.retrieved.length}
+                                </div>
                               </div>
-                              <div className="grid gap-2">
-                                {m.retrieved
-                                  .slice(0, MAX_SOURCES_SHOWN)
-                                  .map((item, idx) => {
+
+                              <div className="space-y-2">
+                                {m.retrieved.slice(0, MAX_SOURCES_SHOWN).map((item, idx) => {
                                   const isProductRow =
-                                    typeof (item as RetrievedItem).name ===
-                                      "string" ||
-                                    typeof (item as RetrievedItem).category ===
-                                      "string";
+                                    typeof (item as RetrievedItem).name === "string" ||
+                                    typeof (item as RetrievedItem).category === "string";
 
                                   const { sourceFile, index } = getSourceMeta(
                                     item.metadata
                                   );
                                   const label = isProductRow
-                                    ? (item.category ?? "Product")
+                                    ? item.category ?? "Product"
                                     : getSourceLabel(sourceFile);
 
                                   const snippet = isProductRow
@@ -389,29 +420,33 @@ export default function Home() {
                                     isProductRow && typeof item.id === "number"
                                       ? item.id
                                       : undefined;
+
                                   return (
                                     <div
                                       key={idx}
-                                      className="bg-[#f8fbff] p-3 rounded-xl border border-neutral-200 text-xs"
+                                      className="flex items-start gap-3 rounded-xl border border-neutral-200/90 bg-[#f8fbff] px-3 py-2"
                                     >
-                                      <div className="flex items-center justify-between gap-3 mb-2">
-                                        <span className="inline-flex items-center bg-[#00568f]/10 text-[#00568f] px-2 py-1 rounded-full text-[10px] font-semibold uppercase tracking-widest border border-[#00568f]/20 whitespace-nowrap">
-                                          {label}
-                                        </span>
-                                        {typeof productId === "number" && (
-                                          <span className="text-[10px] text-neutral-400 font-mono">
-                                            #{productId}
-                                          </span>
-                                        )}
-                                        {typeof productId !== "number" &&
-                                          typeof index === "number" && (
-                                          <span className="text-[10px] text-neutral-400 font-mono">
-                                            #{index}
-                                          </span>
-                                        )}
+                                      <div className="mt-0.5 shrink-0 text-[11px] font-semibold text-[#00568f]">
+                                        {idx + 1}.
                                       </div>
-                                      <div className="text-neutral-600 font-mono whitespace-pre-wrap">
-                                        {snippet.slice(0, 220)}
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex items-center justify-between gap-3 mb-1">
+                                          <span className="inline-flex items-center bg-[#00568f]/10 text-[#00568f] px-2 py-1 rounded-full text-[10px] font-semibold uppercase tracking-widest border border-[#00568f]/20 whitespace-nowrap">
+                                            {label}
+                                          </span>
+                                          {typeof productId === "number" ? (
+                                            <span className="text-[10px] text-neutral-400 font-mono">
+                                              #{productId}
+                                            </span>
+                                          ) : typeof index === "number" ? (
+                                            <span className="text-[10px] text-neutral-400 font-mono">
+                                              #{index}
+                                            </span>
+                                          ) : null}
+                                        </div>
+                                        <div className="text-[12px] text-neutral-700 whitespace-pre-wrap leading-relaxed">
+                                          {snippet}
+                                        </div>
                                       </div>
                                     </div>
                                   );
@@ -429,24 +464,34 @@ export default function Home() {
             </div>
 
             <div className="mt-6">
-              <form onSubmit={handleSearch}>
+              <form onSubmit={handleSearch} aria-busy={loading}>
                 <div className="flex items-stretch rounded-full bg-white pl-4 sm:pl-5 pr-1.5 py-1.5 shadow-[0_4px_24px_rgba(12,61,108,0.12)] border border-neutral-200/90">
                   <input
                     ref={followUpInputRef}
                     type="text"
-                    className="flex-1 min-w-0 bg-transparent border-0 focus:ring-0 focus:outline-none text-base text-neutral-800 placeholder:text-neutral-400 py-3"
+                    className="flex-1 min-w-0 bg-transparent border-0 focus:ring-0 focus:outline-none text-base text-neutral-800 placeholder:text-neutral-400 py-3 disabled:opacity-60"
                     placeholder="Ask a follow-up question..."
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     aria-label="Follow-up search"
+                    disabled={loading}
                   />
                   <button
                     type="submit"
                     disabled={loading}
-                    className="shrink-0 inline-flex items-center justify-center gap-2 rounded-full bg-[#02568d] hover:bg-[#014a79] text-white text-sm font-semibold px-5 sm:px-6 py-3 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                    className="shrink-0 min-w-[7.5rem] inline-flex items-center justify-center gap-2 rounded-full bg-[#02568d] hover:bg-[#014a79] text-white text-sm font-semibold px-5 sm:px-6 py-3 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
                   >
-                    <SearchIcon className="w-[18px] h-[18px]" />
-                    {loading ? "..." : "Search"}
+                    {loading ? (
+                      <>
+                        <Spinner className="w-[18px] h-[18px] text-white" />
+                        <span>Searching</span>
+                      </>
+                    ) : (
+                      <>
+                        <SearchIcon className="w-[18px] h-[18px]" />
+                        <span>Search</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
@@ -523,6 +568,7 @@ export default function Home() {
           height: 0;
           display: none; /* Chrome/Safari */
         }
+
       `}</style>
     </main>
   );
