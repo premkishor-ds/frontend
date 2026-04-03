@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8001";
+  process.env.NEXT_PUBLIC_BACKEND_URL ?? "https://ai-based-maxol-rag-search-backend.24livehost.com";
 
 const MAXOL_LOGO =
   "https://a.mktgcdn.com/p/3ceG4Lyz3-nhUn3zNU-Z0maRT_MeJ1CG2EBigA2iTHI/468x142.png";
