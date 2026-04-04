@@ -20,12 +20,10 @@ const QUICK_LINKS = [
   { label: "Car Wash", value: "Car Wash" },
   { label: "Business Fuel", value: "Business Fuel" },
 ] as const;
-console.log("Test Commit ")
 
 type RetrievedItem = {
   content?: string;
   metadata?: unknown;
-  // When intent routes to SQL, we return rows from `products`.
   id?: number;
   name?: string;
   category?: string;
@@ -98,19 +96,45 @@ function Spinner({ className }: { className?: string }) {
   );
 }
 
-/** Simple loading UI for the assistant reply. */
 function AssistantLoadingBubble() {
   return (
-    <div
-      className="rounded-2xl border border-[#c5d4e8]/70 bg-[#f8fbff] px-3 py-2.5"
-      role="status"
-      aria-live="polite"
-      aria-busy="true"
-    >
-      <span className="sr-only">Searching, please wait</span>
-      <div className="flex items-center gap-2 text-neutral-700 text-sm">
-        <Spinner className="text-[#02568d]" />
-        <span>Searching Maxol data…</span>
+    <div className="w-full space-y-4 animate-fade-in" role="status" aria-busy="true">
+      <div className="rounded-2xl bg-white border border-neutral-100 p-5 shadow-[0_4px_15px_-3px_rgba(0,0,0,0.03)] space-y-4 overflow-hidden relative">
+        <div className="flex items-center gap-2 mb-2">
+          <Spinner className="text-[#02568d] w-4 h-4" />
+          <span className="text-[10px] font-bold text-[#02568d] uppercase tracking-[0.2em] animate-pulse">Maxol AI is synthesizing...</span>
+        </div>
+        
+        {/* Answer Skeleton */}
+        <div className="space-y-2">
+          <div className="h-4 bg-neutral-100 rounded-full w-[90%] animate-pulse" />
+          <div className="h-4 bg-neutral-100 rounded-full w-[75%] animate-pulse delay-75" />
+          <div className="h-4 bg-neutral-100 rounded-full w-[85%] animate-pulse delay-150" />
+        </div>
+
+        {/* Shine Animation overlay */}
+        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer pointer-events-none" />
+      </div>
+
+      {/* Sources Skeleton Header */}
+      <div className="flex items-center gap-3 px-2 pt-2">
+        <div className="h-3 bg-neutral-100 rounded-full w-[120px] animate-pulse" />
+      </div>
+
+      {/* Source Cards Skeletons */}
+      <div className="space-y-3 opacity-60">
+        {[1, 2].map((i) => (
+          <div key={i} className="bg-white border border-neutral-50 rounded-xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-3">
+            <div className="flex justify-between items-center">
+              <div className="h-4 bg-neutral-100 rounded-lg w-[80px] animate-pulse" />
+              <div className="h-2 bg-neutral-100 rounded-full w-[30px] animate-pulse" />
+            </div>
+            <div className="space-y-1.5">
+              <div className="h-3 bg-neutral-50 rounded-full w-full animate-pulse" />
+              <div className="h-3 bg-neutral-50 rounded-full w-[60%] animate-pulse" />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -145,10 +169,8 @@ export default function Home() {
   const getSourceMeta = (metadata: unknown) => {
     if (!metadata || typeof metadata !== "object") return {};
     const m = metadata as Record<string, unknown>;
-    const sourceFile =
-      typeof m["source_file"] === "string" ? (m["source_file"] as string) : undefined;
-    const index =
-      typeof m["index"] === "number" ? (m["index"] as number) : undefined;
+    const sourceFile = typeof m["source_file"] === "string" ? (m["source_file"] as string) : undefined;
+    const index = typeof m["index"] === "number" ? (m["index"] as number) : undefined;
     return { sourceFile, index };
   };
 
@@ -180,9 +202,7 @@ export default function Home() {
     try {
       const res = await fetch(`${BACKEND_URL}/search`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: trimmed }),
       });
 
@@ -228,27 +248,15 @@ export default function Home() {
   const quickLinks = useMemo(() => QUICK_LINKS, []);
 
   return (
-    <main className="min-h-screen flex flex-col bg-white text-neutral-900">
-      {/* Header — deep blue bar, white nav */}
-      <header className="sticky top-0 z-50 bg-[#00568f] text-white shadow-sm">
+    <main className="min-h-screen flex flex-col bg-white text-neutral-900 font-sans">
+      <header className="sticky top-0 z-50 bg-[#00568f] text-white shadow-md">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-[72px] flex items-center justify-between gap-4">
           <div className="flex items-center shrink-0">
-            <Image
-              src={MAXOL_LOGO}
-              alt="Maxol"
-              width={140}
-              height={42}
-              className="h-9 w-auto"
-              priority
-            />
+            <Image src={MAXOL_LOGO} alt="Maxol" width={140} height={42} className="h-9 w-auto" priority />
           </div>
           <nav className="hidden lg:flex items-center gap-6 xl:gap-8 text-[11px] xl:text-xs font-semibold tracking-[0.12em] uppercase">
             {NAV.map((t) => (
-              <a
-                key={t}
-                href="#"
-                className="text-white/95 hover:text-white transition-colors whitespace-nowrap"
-              >
+              <a key={t} href="#" className="text-white/95 hover:text-white transition-colors">
                 {t}
               </a>
             ))}
@@ -256,75 +264,45 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="flex-1 px-4 sm:px-6 pt-10 sm:pt-14 pb-12">
-        {!hasSearched ? (
-          // Landing hero (before first search)
-          <div className="max-w-3xl mx-auto text-center animate-fade-in">
-            <h1 className="text-2xl sm:text-3xl md:text-[2rem] font-bold text-neutral-800 tracking-tight mb-0">
-              <span className="inline-flex flex-wrap items-baseline justify-center gap-x-1.5 gap-y-1">
-                <span>How can</span>
-                <span className="relative inline-flex items-center justify-center px-1 min-w-[4.5ch]">
-                  <span
-                    className="pointer-events-none select-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.22] w-[4.25rem] h-[4.25rem] sm:w-[4.75rem] sm:h-[4.75rem] rounded-full overflow-hidden"
-                    aria-hidden
-                  >
-                    <Image
-                      src={MAXOL_LOGO}
-                      alt=""
-                      width={120}
-                      height={120}
-                      className="w-full h-full object-cover object-left scale-[1.35]"
-                      priority
-                    />
-                  </span>
-                  <span className="relative z-10">Maxol</span>
-                </span>
-                <span>help you today?</span>
-              </span>
-            </h1>
+      <section className="flex-1 px-4 sm:px-6 pt-10 sm:pt-14 pb-12 relative overflow-hidden">
+        {/* Subtle background decoration */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-b from-[#f0f7ff] to-white pointer-events-none -z-10" />
 
-            <form
-              onSubmit={handleSearch}
-              className="mt-8 sm:mt-10 max-w-2xl mx-auto"
-              aria-busy={loading}
-            >
-              <div className="flex items-stretch rounded-full bg-white pl-4 sm:pl-5 pr-1.5 py-1.5 shadow-[0_4px_24px_rgba(12,61,108,0.12)] border border-neutral-200/90">
+        {!hasSearched ? (
+          <div className="max-w-3xl mx-auto text-center animate-fade-in py-10">
+            <h1 className="text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-neutral-800 tracking-tight mb-4">
+              How can <span className="text-[#00568f]">Maxol</span> help you today?
+            </h1>
+            <p className="text-neutral-500 mb-10 text-lg">Your intelligent assistant for fuels, stores, and more.</p>
+
+            <form onSubmit={handleSearch} className="max-w-2xl mx-auto" aria-busy={loading}>
+              <div className="flex items-stretch rounded-full bg-white pl-6 pr-2 py-2 shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-neutral-100 hover:border-neutral-200 focus-within:border-[#00568f]/30 transition-all">
                 <input
                   type="text"
-                  className="flex-1 min-w-0 bg-transparent border-0 focus:ring-0 focus:outline-none text-base text-neutral-800 placeholder:text-neutral-400 py-3 disabled:opacity-60"
+                  className="flex-1 min-w-0 bg-transparent border-0 focus:ring-0 focus:outline-none text-lg text-neutral-800 placeholder:text-neutral-400 py-3"
                   placeholder="Search anything about Maxol..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  aria-label="Search"
                   disabled={loading}
                 />
                 <button
                   type="submit"
                   disabled={loading}
-                  className="shrink-0 min-w-[7.5rem] inline-flex items-center justify-center gap-2 rounded-full bg-[#02568d] hover:bg-[#014a79] text-white text-sm font-semibold px-5 sm:px-6 py-3 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
+                  className="shrink-0 min-w-[8rem] inline-flex items-center justify-center gap-2 rounded-full bg-[#02568d] hover:bg-[#014a79] text-white text-sm font-bold px-6 transition-all shadow-lg shadow-[#02568d]/20"
                 >
-                  {loading ? (
-                    <>
-                      <Spinner className="w-[18px] h-[18px] text-white" />
-                      <span>Searching</span>
-                    </>
-                  ) : (
-                    <>
-                      <SearchIcon className="w-[18px] h-[18px]" />
-                      <span>Search</span>
-                    </>
-                  )}
+                  {loading ? <Spinner className="w-[18px] h-[18px] text-white" /> : <SearchIcon className="w-[18px] h-[18px]" />}
+                  <span>{loading ? "Thinking" : "Search"}</span>
                 </button>
               </div>
             </form>
 
-            <div className="mt-8 flex flex-wrap justify-center gap-2 sm:gap-3">
+            <div className="mt-10 flex flex-wrap justify-center gap-3">
               {quickLinks.map((item) => (
                 <button
                   key={item.label}
                   type="button"
                   onClick={() => void runSearch(item.value)}
-                  className="rounded-full bg-[#f4f6f7] hover:bg-[#eaf1f6] text-[#03568d] text-xs sm:text-sm font-semibold px-4 sm:px-5 py-2 sm:py-2.5 border border-[#c5d4e8]/80 transition-colors"
+                  className="rounded-full bg-white hover:bg-neutral-50 text-[#03568d] text-sm font-semibold px-6 py-2.5 border border-neutral-100 shadow-sm transition-all hover:translate-y-[-1px] active:translate-y-0"
                 >
                   {item.label}
                 </button>
@@ -332,167 +310,171 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          // Chat UI (after first search)
-          <div className="max-w-3xl mx-auto">
-            <div className="mt-4 mb-6">
-              <div className="text-center text-[#00568f] font-bold text-lg">
-                Chat
+          <div className="max-w-4xl mx-auto animate-fade-in px-2 sm:px-0">
+            {/* Thread Header with Reset */}
+            <div className="mb-8 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#00568f] flex items-center justify-center text-white shadow-lg shadow-[#00568f]/20">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-neutral-800 leading-none">Maxol Discovery Thread</h2>
+                  <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mt-1">AI-Powered Search • {messages.filter(m => m.role === 'assistant').length} Results</p>
+                </div>
               </div>
+
+              <button 
+                onClick={() => setMessages([])}
+                className="flex items-center gap-2 px-4 py-2 rounded-full border border-neutral-100 bg-white text-neutral-500 hover:text-[#00568f] hover:border-[#00568f]/20 hover:bg-[#00568f]/5 text-xs font-bold transition-all"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                New Search
+              </button>
             </div>
 
-            <div className="max-h-[62vh] overflow-y-auto pr-1 no-scrollbar">
-              {messages.map((m) => (
-                <div
-                  key={m.id}
-                  className={`flex my-3 ${
-                    m.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  {m.role === "user" ? (
-                    <div className="max-w-[80%] rounded-2xl bg-[#eaf1f6] text-[#02568d] border border-[#c5d4e8]/70 px-4 py-3 text-sm sm:text-base font-medium whitespace-pre-wrap">
-                      {m.text}
+            <div className="space-y-12 max-h-[72vh] overflow-y-auto pr-2 no-scrollbar">
+              {messages.map((m, mIdx) => (
+                <div key={m.id} className="space-y-4">
+                  {/* User Message */}
+                  {m.role === "user" && (
+                    <div className="flex justify-end">
+                      <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-gradient-to-br from-[#02568d] to-[#014a79] text-white px-5 py-3.5 text-[15px] font-medium shadow-md">
+                        {m.text}
+                      </div>
                     </div>
-                  ) : (
-                    <div className="max-w-[80%] rounded-2xl bg-white border border-neutral-200/90 px-4 py-3 shadow-sm">
-                      {m.pending ? (
-                        <AssistantLoadingBubble />
-                      ) : (
-                        <>
-                          {m.intent && (
-                            <div className="mb-2">
-                              <span className="inline-block bg-[#00568f]/10 text-[#00568f] px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-widest border border-[#00568f]/20">
-                                {m.intent} mode
-                              </span>
+                  )}
+
+                  {/* Assistant Message Block */}
+                  {m.role === "assistant" && (
+                    <div className="space-y-8 animate-fade-in">
+                      {/* Answer Bubble */}
+                      <div className="rounded-3xl bg-white border border-neutral-100 p-8 shadow-[0_8px_30px_-10px_rgba(0,0,0,0.05)] relative overflow-hidden group/ans">
+                        {m.pending ? (
+                          <AssistantLoadingBubble />
+                        ) : (
+                          <div className="space-y-6">
+                            <div className="flex items-center justify-between">
+                              {m.intent && (
+                                <span className="inline-flex items-center bg-[#00568f]/5 text-[#00568f] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-[#00568f]/10">
+                                  {m.intent} Mode
+                                </span>
+                              )}
+                              <button 
+                                onClick={() => navigator.clipboard.writeText(m.text)}
+                                className="opacity-0 group-hover/ans:opacity-100 p-2 rounded-lg hover:bg-neutral-50 text-neutral-400 hover:text-[#00568f] transition-all"
+                                title="Copy response"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                              </button>
                             </div>
-                          )}
-                          <div className="text-neutral-800 leading-relaxed whitespace-pre-wrap text-sm sm:text-base font-medium">
-                            {m.text}
+                            <div className="text-neutral-800 leading-relaxed text-[17px] font-normal whitespace-pre-wrap">
+                              {m.text}
+                            </div>
                           </div>
+                        )}
+                      </div>
 
-                          {m.retrieved && m.retrieved.length > 0 && (
-                            <div className="mt-3 pt-3 border-t border-neutral-200">
-                              <div className="flex items-center justify-between gap-3 mb-2">
-                                <div className="text-xs font-bold text-neutral-500 uppercase tracking-widest">
-                                  Sources
-                                </div>
-                                <div className="text-[10px] text-neutral-400 font-mono">
-                                  Showing{" "}
-                                  {Math.min(
-                                    m.retrieved.length,
-                                    MAX_SOURCES_SHOWN
-                                  )}{" "}
-                                  of {m.retrieved.length}
-                                </div>
-                              </div>
+                      {/* Sources Section (Below Answer) */}
+                      {!m.pending && m.retrieved && m.retrieved.length > 0 && (
+                        <div className="space-y-4 px-2">
+                          <div className="flex items-center gap-3">
+                            <div className="h-px bg-neutral-100 flex-1" />
+                            <span className="text-[11px] font-black text-neutral-400 uppercase tracking-[0.2em] whitespace-nowrap">Reliable Citations & Sources</span>
+                            <div className="h-px bg-neutral-100 flex-1" />
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {m.retrieved.slice(0, MAX_SOURCES_SHOWN).map((item, idx) => {
+                              const isProduct = typeof item.name === "string";
+                              const { sourceFile, index } = getSourceMeta(item.metadata);
+                              const label = isProduct ? item.category ?? "Product" : getSourceLabel(sourceFile);
+                              
+                              let snippet = isProduct
+                                ? [item.name, item.price ? `€${item.price}` : null].filter(Boolean).join(" • ")
+                                : (item.content || "");
+                              
+                              let url = snippet.match(/https?:\/\/[^\s$,]+/gi)?.[0] || "";
+                              let cleanText = snippet.replace(/https?:\/\/[^\s$,]+/gi, "").replace(/faq_\d+|ce_[a-zA-Z]+|root|ltr|paragraph|text normal|noopener|search-[a-zA-Z-]+/gi, "").replace(/\b\d{8,}\b/g, "").replace(/\s+/g, " ").trim();
+                              if (cleanText.length > 150) cleanText = cleanText.slice(0, 150) + "...";
 
-                              <div className="space-y-2">
-                                {m.retrieved.slice(0, MAX_SOURCES_SHOWN).map((item, idx) => {
-                                  const isProductRow =
-                                    typeof (item as RetrievedItem).name === "string" ||
-                                    typeof (item as RetrievedItem).category === "string";
+                              const sMap = (l: string) => {
+                                const low = l.toLowerCase();
+                                if (low.includes("faq")) return { bg: "bg-emerald-50", text: "text-emerald-700", accent: "border-emerald-200" };
+                                if (low.includes("location")) return { bg: "bg-amber-50", text: "text-amber-700", accent: "border-amber-200" };
+                                return { bg: "bg-blue-50", text: "text-blue-700", accent: "border-blue-200" };
+                              };
+                              const s = sMap(label);
 
-                                  const { sourceFile, index } = getSourceMeta(
-                                    item.metadata
-                                  );
-                                  const label = isProductRow
-                                    ? item.category ?? "Product"
-                                    : getSourceLabel(sourceFile);
-
-                                  const snippet = isProductRow
-                                    ? [
-                                        item.name ?? "Untitled product",
-                                        item.price !== undefined
-                                          ? `Price: ${item.price}`
-                                          : null,
-                                        item.stock !== undefined
-                                          ? `Stock: ${item.stock}`
-                                          : null,
-                                        item.location
-                                          ? `Location: ${item.location}`
-                                          : null,
-                                      ]
-                                        .filter(Boolean)
-                                        .join(" • ")
-                                    : typeof item.content === "string"
-                                      ? item.content.slice(0, 220)
-                                      : "";
-
-                                  const productId =
-                                    isProductRow && typeof item.id === "number"
-                                      ? item.id
-                                      : undefined;
-
-                                  return (
-                                    <div
-                                      key={idx}
-                                      className="flex items-start gap-3 rounded-xl border border-neutral-200/90 bg-[#f8fbff] px-3 py-2"
-                                    >
-                                      <div className="mt-0.5 shrink-0 text-[11px] font-semibold text-[#00568f]">
-                                        {idx + 1}.
-                                      </div>
-                                      <div className="min-w-0 flex-1">
-                                        <div className="flex items-center justify-between gap-3 mb-1">
-                                          <span className="inline-flex items-center bg-[#00568f]/10 text-[#00568f] px-2 py-1 rounded-full text-[10px] font-semibold uppercase tracking-widest border border-[#00568f]/20 whitespace-nowrap">
-                                            {label}
-                                          </span>
-                                          {typeof productId === "number" ? (
-                                            <span className="text-[10px] text-neutral-400 font-mono">
-                                              #{productId}
-                                            </span>
-                                          ) : typeof index === "number" ? (
-                                            <span className="text-[10px] text-neutral-400 font-mono">
-                                              #{index}
-                                            </span>
-                                          ) : null}
-                                        </div>
-                                        <div className="text-[12px] text-neutral-700 whitespace-pre-wrap leading-relaxed">
-                                          {snippet}
-                                        </div>
-                                      </div>
+                              return (
+                                <div key={idx} className="bg-white border border-neutral-100 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-[#00568f]/30 transition-all group/s relative overflow-hidden animate-slide-up" style={{ animationDelay: `${idx * 0.1}s` }}>
+                                  <div className="flex items-center justify-between mb-3">
+                                    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${s.bg} ${s.text} border ${s.accent}`}>
+                                      {label}
                                     </div>
-                                  );
-                                })}
-                              </div>
+                                    <span className="text-[10px] font-mono text-neutral-300 font-bold">#{(index ?? idx + 1).toString().padStart(2, "0")}</span>
+                                  </div>
+                                  <p className="text-[13px] text-neutral-600 leading-relaxed mb-4">{cleanText || "Source details extracted."}</p>
+                                  {url && (
+                                    <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[#00568f] text-[10px] font-black uppercase tracking-widest hover:underline">
+                                      View Original
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                    </a>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Follow-up Suggestions (only for last message) */}
+                      {!m.pending && mIdx === messages.length - 1 && (
+                        <div className="animate-slide-up pt-4">
+                            <div className="flex items-center gap-2 mb-4 px-2 text-[10px] font-black text-neutral-400 uppercase tracking-[0.2em]">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.5 8.5 0 0 1 7.6 11.7z"/><polyline points="10 9 14 13 10 17"/></svg>
+                              Suggested Exploration
                             </div>
-                          )}
-                        </>
+                            <div className="flex flex-wrap gap-2 px-2">
+                              {["Tell me more about this", "Where can I find it?", "What are the opening hours?"].map((s) => (
+                                <button
+                                  key={s}
+                                  onClick={() => void runSearch(s)}
+                                  className="px-5 py-2.5 rounded-full border border-neutral-100 bg-white text-neutral-600 text-[14px] font-semibold hover:text-[#00568f] hover:border-[#00568f]/30 transition-all flex items-center gap-2 group shadow-sm hover:shadow-md"
+                                >
+                                  {s}
+                                  <svg className="opacity-0 group-hover:opacity-100 transition-all translate-x-[-4px] group-hover:translate-x-0" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                                </button>
+                              ))}
+                            </div>
+                        </div>
                       )}
                     </div>
                   )}
                 </div>
               ))}
-              <div ref={bottomRef} />
+              <div ref={bottomRef} className="h-4" />
             </div>
 
-            <div className="mt-6">
-              <form onSubmit={handleSearch} aria-busy={loading}>
-                <div className="flex items-stretch rounded-full bg-white pl-4 sm:pl-5 pr-1.5 py-1.5 shadow-[0_4px_24px_rgba(12,61,108,0.12)] border border-neutral-200/90">
+            {/* Sticky Search Input at Bottom */}
+            <div className="mt-6 sticky bottom-0 bg-gradient-to-t from-white via-white/95 to-transparent pb-8 pt-12 px-2 -mx-2">
+              <form onSubmit={handleSearch} className="max-w-3xl mx-auto">
+                <div className="flex items-stretch rounded-full bg-white pl-7 pr-2 py-2.5 shadow-[0_15px_50px_-5px_rgb(0,0,0,0.12)] border border-neutral-100 focus-within:border-[#00568f]/40 transition-all">
                   <input
                     ref={followUpInputRef}
                     type="text"
-                    className="flex-1 min-w-0 bg-transparent border-0 focus:ring-0 focus:outline-none text-base text-neutral-800 placeholder:text-neutral-400 py-3 disabled:opacity-60"
-                    placeholder="Ask a follow-up question..."
+                    className="flex-1 min-w-0 bg-transparent border-0 focus:ring-0 focus:outline-none text-[16px] text-neutral-800 placeholder:text-neutral-400 py-3"
+                    placeholder="Ask a follow-up or search again..."
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    aria-label="Follow-up search"
                     disabled={loading}
                   />
                   <button
                     type="submit"
                     disabled={loading}
-                    className="shrink-0 min-w-[7.5rem] inline-flex items-center justify-center gap-2 rounded-full bg-[#02568d] hover:bg-[#014a79] text-white text-sm font-semibold px-5 sm:px-6 py-3 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
+                    className="shrink-0 min-w-[8.5rem] inline-flex items-center justify-center gap-2 rounded-full bg-[#02568d] hover:bg-[#014a79] text-white text-[15px] font-bold px-6 transition-all disabled:opacity-50 shadow-lg shadow-[#02568d]/10"
                   >
-                    {loading ? (
-                      <>
-                        <Spinner className="w-[18px] h-[18px] text-white" />
-                        <span>Searching</span>
-                      </>
-                    ) : (
-                      <>
-                        <SearchIcon className="w-[18px] h-[18px]" />
-                        <span>Search</span>
-                      </>
-                    )}
+                    {loading ? <Spinner className="w-[18px] h-[18px]" /> : <SearchIcon className="w-[18px] h-[18px]" />}
+                    <span>Search</span>
                   </button>
                 </div>
               </form>
@@ -501,75 +483,35 @@ export default function Home() {
         )}
       </section>
 
-      {/* Gold divider + footer — deep blue */}
-      <div className="h-1 bg-[#d4c767] w-full shrink-0" aria-hidden />
-      <footer className="bg-[#00568f] text-white shrink-0">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-[10px] sm:text-[11px] font-semibold tracking-[0.1em] uppercase">
-          <div className="flex items-center">
-            <Image
-              src={MAXOL_LOGO}
-              alt="Maxol"
-              width={100}
-              height={30}
-              className="h-7 w-auto opacity-95"
-            />
+      <footer className="bg-[#00568f] text-white mt-auto border-t border-[#d4c767] border-t-4">
+        <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col items-center sm:items-start gap-2">
+            <Image src={MAXOL_LOGO} alt="Maxol" width={100} height={30} className="h-7 w-auto" />
+            <p className="text-[10px] text-white/60 font-semibold tracking-wider uppercase">© {new Date().getFullYear()} THE MAXOL GROUP</p>
           </div>
-          <p className="text-center text-white/95 order-3 sm:order-none">
-            © {new Date().getFullYear()} THE MAXOL GROUP. ALL RIGHTS RESERVED.
-          </p>
-          <div className="flex items-center gap-4 sm:gap-6">
-            {["Privacy", "Terms", "Contact"].map((t) => (
-              <a
-                key={t}
-                href="#"
-                className="text-white/90 hover:text-white transition-colors"
-              >
-                {t}
-              </a>
-            ))}
+          <div className="flex gap-8 text-[11px] font-bold uppercase tracking-widest text-white/80">
+            <a href="#" className="hover:text-white transition-colors">Privacy</a>
+            <a href="#" className="hover:text-white transition-colors">Terms</a>
+            <a href="#" className="hover:text-white transition-colors">Contact</a>
           </div>
         </div>
       </footer>
 
       <style jsx global>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(-8px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes slide-up {
-          from {
-            opacity: 0;
-            transform: translateY(12px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
+        @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .animate-slide-up { animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes shimmer {
+          100% {
+            transform: translateX(100%);
           }
         }
-        .animate-fade-in {
-          animation: fade-in 0.6s ease-out;
+        .animate-shimmer {
+          animation: shimmer 2s infinite linear;
         }
-        .animate-slide-up {
-          animation: slide-up 0.45s ease-out;
-        }
-
-        /* Hide scrollbars while preserving scroll behavior */
-        .no-scrollbar {
-          scrollbar-width: none; /* Firefox */
-          -ms-overflow-style: none; /* IE/Edge legacy */
-        }
-        .no-scrollbar::-webkit-scrollbar {
-          width: 0;
-          height: 0;
-          display: none; /* Chrome/Safari */
-        }
-
       `}</style>
     </main>
   );
