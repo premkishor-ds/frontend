@@ -264,9 +264,12 @@ export default function Home() {
     <main className="min-h-screen flex flex-col bg-white text-neutral-900 font-sans">
       <header className="sticky top-0 z-50 bg-[#00568f] text-white shadow-md">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-[72px] flex items-center justify-between gap-4">
-          <div className="flex items-center shrink-0">
+          <button 
+            onClick={() => window.location.reload()}
+            className="flex items-center shrink-0 hover:opacity-80 transition-opacity"
+          >
             <Image src={MAXOL_LOGO} alt="Maxol" width={140} height={42} className="h-9 w-auto" priority />
-          </div>
+          </button>
           <nav className="hidden lg:flex items-center gap-6 xl:gap-8 text-[11px] xl:text-xs font-semibold tracking-[0.12em] uppercase">
             {NAV.map((t) => (
               <a key={t} href="#" className="text-white/95 hover:text-white transition-colors">
@@ -365,21 +368,14 @@ export default function Home() {
                         {m.pending ? (
                           <AssistantLoadingBubble />
                         ) : (
-                          <div className="space-y-6">
-                            <div className="flex items-center justify-between">
-                              {m.intent && (
-                                <span className="inline-flex items-center bg-[#00568f]/5 text-[#00568f] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-[#00568f]/10">
-                                  {m.intent} Mode
-                                </span>
-                              )}
-                              <button 
-                                onClick={() => navigator.clipboard.writeText(m.text)}
-                                className="opacity-0 group-hover/ans:opacity-100 p-2 rounded-lg hover:bg-neutral-50 text-neutral-400 hover:text-[#00568f] transition-all"
-                                title="Copy response"
-                              >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                              </button>
-                            </div>
+                          <div className="relative">
+                            <button 
+                              onClick={() => navigator.clipboard.writeText(m.text)}
+                              className="absolute -top-4 -right-4 opacity-0 group-hover/ans:opacity-100 p-2.5 rounded-xl bg-neutral-50/80 backdrop-blur-sm text-neutral-400 hover:text-[#00568f] hover:bg-neutral-100 transition-all shadow-sm border border-neutral-100/50"
+                              title="Copy response"
+                            >
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                            </button>
                             <div className="text-neutral-800 leading-relaxed text-[17px] font-normal whitespace-pre-wrap">
                               {m.text}
                             </div>
@@ -392,7 +388,7 @@ export default function Home() {
                         <div className="space-y-4 px-2">
                           <div className="flex items-center gap-3">
                             <div className="h-px bg-neutral-100 flex-1" />
-                            <span className="text-[11px] font-black text-neutral-400 uppercase tracking-[0.2em] whitespace-nowrap">Reliable Citations & Sources</span>
+                            <span className="text-[11px] font-black text-neutral-400 uppercase tracking-[0.2em] whitespace-nowrap">Verified Sources</span>
                             <div className="h-px bg-neutral-100 flex-1" />
                           </div>
                           
@@ -445,7 +441,7 @@ export default function Home() {
                         <div className="animate-slide-up pt-4">
                             <div className="flex items-center gap-2 mb-4 px-2 text-[10px] font-black text-neutral-400 uppercase tracking-[0.2em]">
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.5 8.5 0 0 1 7.6 11.7z"/><polyline points="10 9 14 13 10 17"/></svg>
-                              Suggested Exploration
+                              Suggested Questions
                             </div>
                             <div className="flex flex-wrap gap-2 px-2">
                               {(m.suggestions ?? ["Tell me more about this", "Where can I find it?", "What are the opening hours?"]).map((s) => (
