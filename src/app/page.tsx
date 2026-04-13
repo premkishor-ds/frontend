@@ -95,44 +95,23 @@ function Spinner({ className }: { className?: string }) {
 
 function AssistantLoadingBubble() {
   return (
-    <div className="w-full space-y-4 animate-fade-in" role="status" aria-busy="true">
-      <div className="rounded-2xl bg-white border border-neutral-100 p-5 shadow-[0_4px_15px_-3px_rgba(0,0,0,0.03)] space-y-4 overflow-hidden relative">
-        <div className="flex items-center gap-2 mb-2">
-          <Spinner className="text-[#02568d] w-4 h-4" />
-          <span className="text-[10px] font-bold text-[#02568d] uppercase tracking-[0.2em] animate-pulse">Maxol AI is working on your request…</span>
+    <div className="w-full space-y-5 animate-pulse" role="status" aria-busy="true">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="flex gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-[#02568d] animate-bounce [animation-delay:-0.3s]"></div>
+          <div className="w-2 h-2 rounded-full bg-[#02568d] animate-bounce [animation-delay:-0.15s]"></div>
+          <div className="w-2 h-2 rounded-full bg-[#02568d] animate-bounce"></div>
         </div>
-        
-        {/* Answer Skeleton */}
-        <div className="space-y-2">
-          <div className="h-4 bg-neutral-100 rounded-full w-[90%] animate-pulse" />
-          <div className="h-4 bg-neutral-100 rounded-full w-[75%] animate-pulse delay-75" />
-          <div className="h-4 bg-neutral-100 rounded-full w-[85%] animate-pulse delay-150" />
-        </div>
-
-        {/* Shine Animation overlay */}
-        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer pointer-events-none" />
+        <span className="text-[10px] font-black text-[#02568d] uppercase tracking-[0.25em]">Maxol AI is generating...</span>
+      </div>
+      
+      <div className="space-y-3">
+        <div className="h-4 bg-neutral-100 rounded-full w-[95%]" />
+        <div className="h-4 bg-neutral-100 rounded-full w-4/5" />
+        <div className="h-4 bg-neutral-100 rounded-full w-[85%]" />
       </div>
 
-      {/* Sources Skeleton Header */}
-      <div className="flex items-center gap-3 px-2 pt-2">
-        <div className="h-3 bg-neutral-100 rounded-full w-[120px] animate-pulse" />
-      </div>
-
-      {/* Source Cards Skeletons */}
-      <div className="space-y-3 opacity-60">
-        {[1, 2].map((i) => (
-          <div key={i} className="bg-white border border-neutral-50 rounded-xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-3">
-            <div className="flex justify-between items-center">
-              <div className="h-4 bg-neutral-100 rounded-lg w-[80px] animate-pulse" />
-              <div className="h-2 bg-neutral-100 rounded-full w-[30px] animate-pulse" />
-            </div>
-            <div className="space-y-1.5">
-              <div className="h-3 bg-neutral-50 rounded-full w-full animate-pulse" />
-              <div className="h-3 bg-neutral-50 rounded-full w-[60%] animate-pulse" />
-            </div>
-          </div>
-        ))}
-      </div>
+      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer pointer-events-none" />
     </div>
   );
 }
@@ -304,10 +283,19 @@ export default function Home() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="shrink-0 min-w-[8rem] inline-flex items-center justify-center gap-2 rounded-full bg-[#02568d] hover:bg-[#014a79] text-white text-sm font-bold px-6 transition-all shadow-lg shadow-[#02568d]/20"
+                  className="shrink-0 min-w-[9rem] inline-flex items-center justify-center gap-2 rounded-full bg-[#02568d] hover:bg-[#014a79] text-white text-sm font-bold px-6 transition-all shadow-lg shadow-[#02568d]/20 disabled:opacity-70"
                 >
-                  {loading ? <Spinner className="w-[18px] h-[18px] text-white" /> : <SearchIcon className="w-[18px] h-[18px]" />}
-                  <span>{loading ? "Thinking" : "Search"}</span>
+                  {loading ? (
+                    <>
+                      <Spinner className="w-[18px] h-[18px] text-white" />
+                      <span>Thinking...</span>
+                    </>
+                  ) : (
+                    <>
+                      <SearchIcon className="w-[18px] h-[18px]" />
+                      <span>Search</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
