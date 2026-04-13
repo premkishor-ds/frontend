@@ -14,12 +14,7 @@ const NAV = ["IN-STORE", "FORECOURT", "BUSINESS", "ABOUT", "NEWS"] as const;
 /** Must match backend `SEARCH_RETRIEVED_MAX` default (5). */
 const MAX_SOURCES_SHOWN = 5;
 
-const QUICK_LINKS = [
-  { label: "Nearest Maxol", value: "Nearest Maxol" },
-  { label: "Fuel Prices", value: "Maxol Fuel Prices" },
-  { label: "Car Wash", value: "Car Wash" },
-  { label: "Business Fuel", value: "Business Fuel" },
-] as const;
+type Suggestion = { label: string; value: string };
 
 type RetrievedItem = {
   content?: string;
@@ -34,6 +29,7 @@ type RetrievedItem = {
 
 type SearchResponse = {
   answer: string;
+  suggestions?: string[];
   retrieved: RetrievedItem[];
   intent?: string;
 };
@@ -42,6 +38,7 @@ type ChatMessage = {
   id: string;
   role: "user" | "assistant";
   text: string;
+  suggestions?: string[];
   pending?: boolean;
   intent?: string;
   retrieved?: RetrievedItem[];
@@ -102,7 +99,7 @@ function AssistantLoadingBubble() {
       <div className="rounded-2xl bg-white border border-neutral-100 p-5 shadow-[0_4px_15px_-3px_rgba(0,0,0,0.03)] space-y-4 overflow-hidden relative">
         <div className="flex items-center gap-2 mb-2">
           <Spinner className="text-[#02568d] w-4 h-4" />
-          <span className="text-[10px] font-bold text-[#02568d] uppercase tracking-[0.2em] animate-pulse">Maxol AI is synthesizing...</span>
+          <span className="text-[10px] font-bold text-[#02568d] uppercase tracking-[0.2em] animate-pulse">Maxol AI is working on your request…</span>
         </div>
         
         {/* Answer Skeleton */}
@@ -148,6 +145,7 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const followUpInputRef = useRef<HTMLInputElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -175,6 +173,20 @@ export default function Home() {
   };
 
   useEffect(() => {
+    // Fetch dynamic initial suggestions
+    fetch(`${BACKEND_URL}/initial-suggestions`)
+      .then((res) => res.json())
+      .then((data) => setSuggestions(data as Suggestion[]))
+      .catch((err) => {
+        console.error("Failed to fetch suggestions:", err);
+        setSuggestions([
+          { label: "Nearest Maxol", value: "Nearest Maxol" },
+          { label: "Fuel Prices", value: "Maxol Fuel Prices" },
+          { label: "Engine Oil", value: "Maxol Engine Oil" },
+          { label: "Business Fuel", value: "Business Fuel" },
+        ]);
+      });
+
     if (!bottomRef.current) return;
     bottomRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages.length]);
@@ -212,6 +224,7 @@ export default function Home() {
         id: makeId(),
         role: "assistant",
         text: data.answer,
+        suggestions: data.suggestions,
         intent: data.intent,
         retrieved: data.retrieved,
       };
@@ -245,7 +258,7 @@ export default function Home() {
     await runSearch(query);
   };
 
-  const quickLinks = useMemo(() => QUICK_LINKS, []);
+  const quickLinks = suggestions;
 
   return (
     <main className="min-h-screen flex flex-col bg-white text-neutral-900 font-sans">
@@ -435,7 +448,7 @@ export default function Home() {
                               Suggested Exploration
                             </div>
                             <div className="flex flex-wrap gap-2 px-2">
-                              {["Tell me more about this", "Where can I find it?", "What are the opening hours?"].map((s) => (
+                              {(m.suggestions ?? ["Tell me more about this", "Where can I find it?", "What are the opening hours?"]).map((s) => (
                                 <button
                                   key={s}
                                   onClick={() => void runSearch(s)}
