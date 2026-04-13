@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL ?? "https://ai-based-maxol-rag-search-backend.24livehost.com";
@@ -125,6 +126,45 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+
+  // Typing Placeholder Logic
+  const placeholderSuggestions = useMemo(() => [
+    "Search across 240+ Maxol stations...",
+    "Find Gear or Transmission Oil...",
+    "Compare 15W/40 Engine Oils...",
+    "Ask about Business Fuel Cards...",
+    "Search the Maxol FAQ knowledge base...",
+    "Where is the nearest car wash?"
+  ], []);
+  const [placeholder, setPlaceholder] = useState("");
+  const [pIdx, setPIdx] = useState(0);
+  const [charIdx, setCharIdx] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const currentFull = placeholderSuggestions[pIdx];
+    const typingSpeed = isDeleting ? 40 : 80;
+    const pauseTime = isDeleting ? 0 : 2000;
+
+    const timeout = setTimeout(() => {
+      if (!isDeleting && charIdx < currentFull.length) {
+        setPlaceholder(currentFull.substring(0, charIdx + 1));
+        setCharIdx(charIdx + 1);
+      } else if (isDeleting && charIdx > 0) {
+        setPlaceholder(currentFull.substring(0, charIdx - 1));
+        setCharIdx(charIdx - 1);
+      } else if (!isDeleting && charIdx === currentFull.length) {
+        setTimeout(() => setIsDeleting(true), pauseTime);
+      } else {
+        setIsDeleting(false);
+        setPIdx((pIdx + 1) % placeholderSuggestions.length);
+        setCharIdx(0);
+      }
+    }, typingSpeed);
+
+    return () => clearTimeout(timeout);
+  }, [charIdx, isDeleting, pIdx, placeholderSuggestions]);
+
   const followUpInputRef = useRef<HTMLInputElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -259,26 +299,32 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="flex-1 px-4 sm:px-6 pt-10 sm:pt-14 pb-12 relative overflow-hidden">
-        {/* Subtle background decoration */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-b from-[#f0f7ff] to-white pointer-events-none -z-10" />
+      <section className="flex-1 w-full px-4 sm:px-6 pt-10 sm:pt-14 pb-12 relative overflow-hidden flex flex-col items-center">
+        {/* Premium Background Decoration */}
+        <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-[1200px] h-[800px] bg-[#02568d]/5 blur-[120px] rounded-[100%] pointer-events-none -z-10" />
+        <div className="absolute top-[10%] right-[10%] w-[300px] h-[300px] bg-[#02568d]/10 blur-[80px] rounded-full pointer-events-none -z-10 animate-pulse" />
+        <div className="absolute bottom-[20%] left-[5%] w-[400px] h-[400px] bg-[#02568d]/5 blur-[100px] rounded-full pointer-events-none -z-10" />
 
         {!hasSearched ? (
-          <div className="max-w-3xl mx-auto text-center animate-fade-in py-10">
-            <h1 className="text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-neutral-800 tracking-tight mb-4">
-              How can <span className="text-[#00568f]">Maxol</span> help you today?
+          <div className="w-full max-w-4xl mx-auto py-12 lg:py-24 flex flex-col items-center text-center animate-fade-in relative z-10">
+            <h1 className="text-3xl sm:text-4xl md:text-[3.75rem] font-black text-neutral-900 leading-[1.1] tracking-tight mb-6 animate-slide-up">
+              How can Maxol help you today?
             </h1>
-            <p className="text-neutral-500 mb-10 text-lg">Your intelligent assistant for fuels, stores, and more.</p>
+            
+            <p className="text-lg text-neutral-500 max-w-xl mb-12 leading-relaxed font-semibold animate-slide-up [animation-delay:0.1s] opacity-80">
+              Your intelligent assistant for fuels, stores, and more.
+            </p>
 
-            <form onSubmit={handleSearch} className="max-w-2xl mx-auto" aria-busy={loading}>
-              <div className="flex items-stretch rounded-full bg-white pl-6 pr-2 py-2 shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-neutral-100 hover:border-neutral-200 focus-within:border-[#00568f]/30 transition-all">
+            <form onSubmit={handleSearch} className="w-full max-w-2xl mx-auto relative group mb-16" aria-busy={loading}>
+              <div className="absolute inset-0 bg-[#02568d]/10 blur-3xl opacity-0 group-focus-within:opacity-100 transition-all duration-700 rounded-full" />
+              <div className="relative flex items-stretch rounded-full bg-white/80 backdrop-blur-xl pl-8 pr-2.5 py-2.5 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.12)] border border-neutral-100 hover:border-neutral-200 focus-within:border-[#02568d] focus-within:ring-4 focus-within:ring-[#02568d]/5 transition-all duration-300">
                 <input
                   type="text"
-                  className="flex-1 min-w-0 bg-transparent border-0 focus:ring-0 focus:outline-none text-lg text-neutral-800 placeholder:text-neutral-400 py-3"
-                  placeholder="Search anything about Maxol..."
+                  placeholder={placeholder}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  disabled={loading}
+                  className="flex-1 bg-transparent border-none focus:outline-none text-neutral-800 text-lg placeholder-neutral-300 font-medium py-3"
+                  autoFocus
                 />
                 <button
                   type="submit"
@@ -300,13 +346,13 @@ export default function Home() {
               </div>
             </form>
 
-            <div className="mt-10 flex flex-wrap justify-center gap-3">
+            <div className="mt-10 flex flex-wrap justify-center gap-3 animate-slide-up [animation-delay:0.2s]">
               {quickLinks.map((item) => (
                 <button
                   key={item.label}
                   type="button"
                   onClick={() => void runSearch(item.value)}
-                  className="rounded-full bg-white hover:bg-neutral-50 text-[#03568d] text-sm font-semibold px-6 py-2.5 border border-neutral-100 shadow-sm transition-all hover:translate-y-[-1px] active:translate-y-0"
+                  className="rounded-full bg-white hover:bg-neutral-50 text-[#03568d] text-sm font-bold px-7 py-3 border border-neutral-100 shadow-sm transition-all hover:translate-y-[-1px] active:translate-y-0"
                 >
                   {item.label}
                 </button>
@@ -314,9 +360,9 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <div className="max-w-4xl mx-auto animate-fade-in px-2 sm:px-0">
+          <div className="w-full max-w-6xl mx-auto animate-fade-in px-6 sm:px-10">
             {/* Thread Header with Reset */}
-            <div className="mb-8 flex items-center justify-between gap-4">
+            <div className="mb-12 flex items-center justify-between gap-4 border-b border-neutral-100 pb-10">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#00568f] flex items-center justify-center text-white shadow-lg shadow-[#00568f]/20">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -352,7 +398,7 @@ export default function Home() {
                   {m.role === "assistant" && (
                     <div className="space-y-8 animate-fade-in">
                       {/* Answer Bubble */}
-                      <div className="rounded-3xl bg-white border border-neutral-100 p-8 shadow-[0_8px_30px_-10px_rgba(0,0,0,0.05)] relative overflow-hidden group/ans">
+                      <div className="rounded-2xl sm:rounded-3xl bg-white border border-neutral-100 p-6 sm:p-10 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.06)] relative overflow-hidden group/ans">
                         {m.pending ? (
                           <AssistantLoadingBubble />
                         ) : (
@@ -364,8 +410,8 @@ export default function Home() {
                             >
                               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                             </button>
-                            <div className="text-neutral-800 leading-relaxed text-[17px] font-normal whitespace-pre-wrap">
-                              {m.text}
+                            <div className="text-neutral-800 leading-relaxed text-[17px] font-normal prose prose-neutral max-w-none">
+                              <ReactMarkdown>{m.text}</ReactMarkdown>
                             </div>
                           </div>
                         )}
@@ -411,12 +457,6 @@ export default function Home() {
                                     <span className="text-[10px] font-mono text-neutral-300 font-bold">#{(index ?? idx + 1).toString().padStart(2, "0")}</span>
                                   </div>
                                   <p className="text-[13px] text-neutral-600 leading-relaxed mb-4">{cleanText || "Source details extracted."}</p>
-                                  {url && (
-                                    <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[#00568f] text-[10px] font-black uppercase tracking-widest hover:underline">
-                                      View Original
-                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                                    </a>
-                                  )}
                                 </div>
                               );
                             })}
@@ -453,9 +493,9 @@ export default function Home() {
             </div>
 
             {/* Sticky Search Input at Bottom */}
-            <div className="mt-6 sticky bottom-0 bg-gradient-to-t from-white via-white/95 to-transparent pb-8 pt-12 px-2 -mx-2">
-              <form onSubmit={handleSearch} className="max-w-3xl mx-auto">
-                <div className="flex items-stretch rounded-full bg-white pl-7 pr-2 py-2.5 shadow-[0_15px_50px_-5px_rgb(0,0,0,0.12)] border border-neutral-100 focus-within:border-[#00568f]/40 transition-all">
+            <div className="mt-8 sticky bottom-0 bg-gradient-to-t from-white via-white/95 to-transparent pb-8 pt-12 px-2 -mx-2">
+              <form onSubmit={handleSearch} className="max-w-5xl mx-auto">
+                <div className="flex items-stretch rounded-full bg-white pl-10 pr-3 py-4 shadow-[0_20px_70px_-5px_rgb(0,0,0,0.18)] border border-neutral-100 focus-within:border-[#02568d] transition-all">
                   <input
                     ref={followUpInputRef}
                     type="text"
@@ -480,16 +520,19 @@ export default function Home() {
         )}
       </section>
 
-      <footer className="bg-[#00568f] text-white mt-auto border-t border-[#d4c767] border-t-4">
-        <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex flex-col items-center sm:items-start gap-2">
-            <Image src={MAXOL_LOGO} alt="Maxol" width={100} height={30} className="h-7 w-auto" />
-            <p className="text-[10px] text-white/60 font-semibold tracking-wider uppercase">© {new Date().getFullYear()} THE MAXOL GROUP</p>
+
+      {/* Executive Footer */}
+      <footer className="mt-auto py-8 border-t border-neutral-50 bg-neutral-50/30">
+        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-[11px] font-bold text-neutral-400 uppercase tracking-widest">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#02568d] opacity-50" />
+            © 2026 The Maxol Group
           </div>
-          <div className="flex gap-8 text-[11px] font-bold uppercase tracking-widest text-white/80">
-            <a href="#" className="hover:text-white transition-colors">Privacy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms</a>
-            <a href="#" className="hover:text-white transition-colors">Contact</a>
+          <div>Powered by Maxol AI Discovery Engine v2.4.0</div>
+          <div className="flex items-center gap-4">
+            <a href="#" className="hover:text-[#02568d] transition-colors">Privacy</a>
+            <a href="#" className="hover:text-[#02568d] transition-colors">Terms</a>
+            <a href="#" className="hover:text-[#02568d] transition-colors">Data Security</a>
           </div>
         </div>
       </footer>
@@ -508,6 +551,21 @@ export default function Home() {
         }
         .animate-shimmer {
           animation: shimmer 2s infinite linear;
+        }
+        /* Markdown Bullet Styling */
+        .prose ul {
+          list-style-type: disc;
+          padding-left: 1.5rem;
+          margin-top: 0.75rem;
+          margin-bottom: 0.75rem;
+        }
+        .prose li {
+          margin-bottom: 0.5rem;
+          display: list-item;
+        }
+        .prose strong {
+          color: #00568f;
+          font-weight: 800;
         }
       `}</style>
     </main>
