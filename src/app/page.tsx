@@ -299,7 +299,7 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="flex-1 w-full px-4 sm:px-6 pt-10 sm:pt-14 pb-12 relative overflow-hidden flex flex-col items-center">
+      <section className="flex-1 w-full px-4 sm:px-6 pt-10 sm:pt-14 pb-12 relative flex flex-col items-center">
         {/* Premium Background Decoration */}
         <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-[1200px] h-[800px] bg-[#02568d]/5 blur-[120px] rounded-[100%] pointer-events-none -z-10" />
         <div className="absolute top-[10%] right-[10%] w-[300px] h-[300px] bg-[#02568d]/10 blur-[80px] rounded-full pointer-events-none -z-10 animate-pulse" />
@@ -360,7 +360,7 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <div className="w-full max-w-6xl mx-auto animate-fade-in px-6 sm:px-10">
+          <div className="w-full max-w-6xl mx-auto animate-fade-in px-6 sm:px-10 pb-36">
             {/* Thread Header with Reset */}
             <div className="mb-12 flex items-center justify-between gap-4 border-b border-neutral-100 pb-10">
               <div className="flex items-center gap-3">
@@ -382,7 +382,7 @@ export default function Home() {
               </button>
             </div>
 
-            <div className="space-y-12 max-h-[72vh] overflow-y-auto pr-2 no-scrollbar">
+            <div className="space-y-12">
               {messages.map((m, mIdx) => (
                 <div key={m.id} className="space-y-4">
                   {/* User Message */}
@@ -492,8 +492,8 @@ export default function Home() {
               <div ref={bottomRef} className="h-4" />
             </div>
 
-            {/* Sticky Search Input at Bottom */}
-            <div className="mt-8 sticky bottom-0 bg-gradient-to-t from-white via-white/95 to-transparent pb-8 pt-12 px-2 -mx-2">
+            {/* Fixed Search Input at Bottom */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl pt-6 pb-8 px-4 sm:px-10 z-40 border-t border-neutral-100/50">
               <form onSubmit={handleSearch} className="max-w-5xl mx-auto">
                 <div className="flex items-stretch rounded-full bg-white pl-10 pr-3 py-4 shadow-[0_20px_70px_-5px_rgb(0,0,0,0.18)] border border-neutral-100 focus-within:border-[#02568d] transition-all">
                   <input
@@ -521,21 +521,7 @@ export default function Home() {
       </section>
 
 
-      {/* Executive Footer */}
-      <footer className="mt-auto py-8 border-t border-neutral-50 bg-neutral-50/30">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-[11px] font-bold text-neutral-400 uppercase tracking-widest">
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#02568d] opacity-50" />
-            © 2026 The Maxol Group
-          </div>
-          <div>Powered by Maxol AI Discovery Engine v2.4.0</div>
-          <div className="flex items-center gap-4">
-            <a href="#" className="hover:text-[#02568d] transition-colors">Privacy</a>
-            <a href="#" className="hover:text-[#02568d] transition-colors">Terms</a>
-            <a href="#" className="hover:text-[#02568d] transition-colors">Data Security</a>
-          </div>
-        </div>
-      </footer>
+
 
       <style jsx global>{`
         @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
