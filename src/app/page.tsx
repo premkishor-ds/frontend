@@ -432,13 +432,64 @@ export default function Home() {
                               const { sourceFile, index } = getSourceMeta(item.metadata);
                               const label = isProduct ? item.category ?? "Product" : getSourceLabel(sourceFile);
                               
+                              const isLocation = getSourceLabel(sourceFile).toLowerCase().includes("location");
+
+                              // Parse location content to extract station ID and services
+                              const rawContent = item.content || "";
+                              let locationId = "";
+                              let locationServices: string[] = [];
+                              if (isLocation) {
+                                const idMatch = rawContent.match(/\b(S\d{4,})\b/i);
+                                if (idMatch) locationId = idMatch[1].toUpperCase();
+                                // Extract service names: words between "Opening time" (or after ID) and first HH:MM pattern
+                                const timePattern = /\b\d{2}:\d{2}\b/;
+                                const timeIdx = rawContent.search(timePattern);
+                                const beforeTimes = timeIdx > -1 ? rawContent.slice(0, timeIdx) : rawContent;
+                                const serviceTokens = beforeTimes
+                                  .replace(/\b(S\d{4,})\b/gi, "")
+                                  .replace(/\b(location|opening|time)\b/gi, "")
+                                  .replace(/\s+/g, " ")
+                                  .trim();
+                                const knownServices = ["Diesel", "Unleaded", "Solid Fuel", "AdBlue", "Car Wash", "Jet Wash", "Services", "LPG", "NCT", "Deli", "Coffee"];
+                                locationServices = knownServices.filter(svc =>
+                                  new RegExp(`\\b${svc}\\b`, "i").test(serviceTokens)
+                                );
+                                // Fallback: split remaining words as services if none matched
+                                if (locationServices.length === 0 && serviceTokens.length > 0) {
+                                  locationServices = serviceTokens.split(/\s+/).filter(w => w.length > 2 && !/^\d/.test(w)).slice(0, 6);
+                                }
+                              }
+
                               let snippet = isProduct
                                 ? [item.name, item.price ? `€${item.price}` : null].filter(Boolean).join(" • ")
-                                : (item.content || "");
+                                : rawContent;
                               
-                              let url = snippet.match(/https?:\/\/[^\s$,]+/gi)?.[0] || "";
-                              let cleanText = snippet.replace(/https?:\/\/[^\s$,]+/gi, "").replace(/faq_\d+|ce_[a-zA-Z]+|root|ltr|paragraph|text normal|noopener|search-[a-zA-Z-]+/gi, "").replace(/\b\d{8,}\b/g, "").replace(/\s+/g, " ").trim();
-                              if (cleanText.length > 150) cleanText = cleanText.slice(0, 150) + "...";
+                              let cleanText = "";
+                              if (isLocation) {
+                                if (locationId) {
+                                  cleanText = `Maxol Station ${locationId}`;
+                                  if (locationServices.length > 0) {
+                                    const servicesStr = locationServices.slice(0, -1).join(", ") + (locationServices.length > 1 ? ` and ${locationServices[locationServices.length - 1]}` : locationServices[0]);
+                                    cleanText += ` offering ${servicesStr}.`;
+                                  } else {
+                                    cleanText += ".";
+                                  }
+                                } else {
+                                  cleanText = "Maxol Station location details.";
+                                }
+                              } else {
+                                cleanText = snippet
+                                  .replace(/https?:\/\/[^\s$,]+/gi, "")
+                                  .replace(/faq_\d+|ce_[a-zA-Z]+|root|ltr|paragraph|text normal|noopener|search-[a-zA-Z-]+/gi, "")
+                                  .replace(/\b\d{8,}\b/g, "")
+                                  .replace(/\b\d{2}:\d{2}\b/g, "")
+                                  .replace(/\b(product|products|Directory|automotive|Automotive|Engine)\b/gi, "") // Remove metadata junk tags
+                                  .replace(/\b(Fuel Card)\s+\1\b/gi, "Fuel Card") // Deduplicate adjacent "Fuel Card Fuel Card"
+                                  .replace(/\b(\w+)\s+\1\b/gi, "$1") // General deduplication of adjacent duplicate words
+                                  .replace(/\s+/g, " ")
+                                  .trim();
+                                if (cleanText.length > 150) cleanText = cleanText.slice(0, 150) + "...";
+                              }
 
                               const sMap = (l: string) => {
                                 const low = l.toLowerCase();
@@ -456,7 +507,22 @@ export default function Home() {
                                     </div>
                                     <span className="text-[10px] font-mono text-neutral-300 font-bold">#{(index ?? idx + 1).toString().padStart(2, "0")}</span>
                                   </div>
-                                  <p className="text-[13px] text-neutral-600 leading-relaxed mb-4">{cleanText || "Source details extracted."}</p>
+
+                                  {/* Location card details */}
+                                  {isLocation && (
+                                    <div className="space-y-2.5">
+                                      {locationId && (
+                                        <div className="flex items-center gap-2">
+                                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-amber-500 shrink-0"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                          <span className="text-[12px] font-bold text-neutral-700">Station {locationId}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {cleanText && (
+                                  <p className="text-[13px] text-neutral-600 leading-relaxed mt-2.5 mb-2">{cleanText}</p>
+                                  )}
                                 </div>
                               );
                             })}
