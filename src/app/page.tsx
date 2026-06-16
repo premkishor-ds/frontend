@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL ?? "https://ai-based-maxol-rag-search-backend.24livehost.com";
+  process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://127.0.0.1:8000";
 
 const MAXOL_LOGO =
   "https://a.mktgcdn.com/p/3ceG4Lyz3-nhUn3zNU-Z0maRT_MeJ1CG2EBigA2iTHI/468x142.png";
